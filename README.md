@@ -110,6 +110,6 @@ Contributions are welcome! Please follow these steps:
 ## Contact
 
 - **Author**: [adhnan-alt](https://github.com/adhnan-alt)
-- **Email**: [YourEmail@example.com]
+- **Email**: [semiadhnan269@gmail.com]
 
 Feel free to open an issue if you have any questions!
