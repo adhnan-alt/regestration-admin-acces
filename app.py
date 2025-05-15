@@ -7,6 +7,8 @@ app = Flask(__name__)
 def init_db():
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
+
+    # Users table
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -15,6 +17,16 @@ def init_db():
             email TEXT NOT NULL
         )
     ''')
+
+    # Logins table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS logins (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            login_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
     conn.commit()
     conn.close()
 
@@ -55,21 +67,41 @@ def login():
         c = conn.cursor()
         c.execute('SELECT * FROM users WHERE username = ? AND password = ?', (username, password))
         user = c.fetchone()  # Fetch one user if found
-        
-        conn.close()
-        
+
         if user:
+            # Log the login time
+            c.execute('INSERT INTO logins (username) VALUES (?)', (username,))
+            conn.commit()
+
+            conn.close()
+
+            # Redirect admin to admin page
+            if username == 'admin':
+                return redirect(url_for('admin'))
+
             return redirect(url_for('home'))
         else:
-            return render_template('login.html', error="Invalid username or password.")
+            conn.close()
+            return render_template('login.html', error="❌ Invalid username or password. Try again!")
     
     return render_template('login.html')
 
 # Route for home page after login
 @app.route('/home')
 def home():
-    return "Welcome to the Home Page! You are logged in."
+    return "✅ Welcome to the Home Page! You are logged in."
 
+# Route for admin to view login history
+@app.route('/admin')
+def admin():
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    c.execute('SELECT username, login_time FROM logins ORDER BY login_time DESC')
+    logins = c.fetchall()
+    conn.close()
+    return render_template('admin.html', logins=logins)
+
+# Run the Flask app
 if __name__ == '__main__':
     init_db()  # Initialize the database when app starts
     app.run(debug=True)
